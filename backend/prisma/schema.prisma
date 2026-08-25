@@ -1,0 +1,153 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider        = "prisma-client-js"
+}
+
+model Customer {
+  id             String    @id @default(uuid())
+  externalRef    String?   @unique
+  name           String
+  email          String    @unique
+  phone          String?
+  segment        String?
+  lifetimeValue  Float     @default(0.0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  payments       Payment[]
+}
+
+model Payment {
+  id             String    @id @default(uuid())
+  externalRef    String?   @unique
+  customerId     String
+  amount         Float
+  currency       String    @default("USD")
+  status         PaymentStatus
+  failureReason  String?
+  retryCount     Int       @default(0)
+  maxRetryCount  Int       @default(3)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  recoveredAt    DateTime?
+
+  customer       Customer  @relation(fields: [customerId], references: [id])
+  agentRuns      AgentRun[]
+  auditLogs      AuditLog[]
+  approvalReqs   ApprovalRequest[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum PaymentStatus {
+  PENDING
+  FAILED
+  SUCCESS
+  REQUIRES_ACTION
+}
+
+model AgentRun {
+  id               String       @id @default(uuid())
+  paymentId        String
+  status           String
+  startedAt        DateTime     @default(now())
+  completedAt      DateTime?
+  currentStepCount Int          @default(0)
+  finalOutcome     String?
+  decisionSummary  String?
+  confidence       Float?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  payment          Payment      @relation(fields: [paymentId], references: [id])
+  agentActions     AgentAction[]
+  auditLogs        AuditLog[]
+  approvalReqs     ApprovalRequest[]
+
+  @@index([paymentId])
+  @@index([status])
+}
+
+model AgentAction {
+  id               String       @id @default(uuid())
+  agentRunId       String
+  actionType       String
+  toolName         String
+  inputParams      Json?
+  policyDecision   String?
+  executionStatus  String
+  resultSummary    String?
+  stepNumber       Int
+  timestamps       Json?
+
+  agentRun         AgentRun     @relation(fields: [agentRunId], references: [id])
+
+  @@index([agentRunId])
+}
+
+model AuditLog {
+  id               String       @id @default(uuid())
+  paymentId        String?
+  agentRunId       String?
+  eventType        String
+  message          String
+  metadata         Json?
+  timestamp        DateTime     @default(now())
+
+  payment          Payment?     @relation(fields: [paymentId], references: [id])
+  agentRun         AgentRun?    @relation(fields: [agentRunId], references: [id])
+
+  @@index([paymentId])
+  @@index([agentRunId])
+}
+
+model MerchantPolicy {
+  id                        String   @id @default(uuid())
+  maxRetryAttempts          Int      @default(3)
+  maxDiscountPercent        Float    @default(10.0)
+  minimumConfidence         Float    @default(0.70)
+  highValueThreshold        Float    @default(100.0)
+  maxAgentSteps             Int      @default(5)
+  highValueApprovalRequired Boolean  @default(true)
+  active                    Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+model RecoveryOffer {
+  id                        String   @id @default(uuid())
+  name                      String
+  discountPercent           Float
+  maximumApplicableAmount   Float?
+  active                    Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+model ApprovalRequest {
+  id               String       @id @default(uuid())
+  paymentId        String
+  agentRunId       String?
+  proposedAction   String
+  reason           String
+  status           ApprovalStatus @default(PENDING)
+  requestedAt      DateTime     @default(now())
+  resolvedAt       DateTime?
+  resolutionNote   String?
+
+  payment          Payment      @relation(fields: [paymentId], references: [id])
+  agentRun         AgentRun?    @relation(fields: [agentRunId], references: [id])
+
+  @@index([status])
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
