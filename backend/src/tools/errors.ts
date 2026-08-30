@@ -1,0 +1,17 @@
+export class ToolError extends Error {
+  constructor(public code: string, message: string) {
+    super(message);
+    this.name = 'ToolError';
+  }
+}
+
+export const ToolErrorCodes = {
+  PAYMENT_NOT_FOUND: 'PAYMENT_NOT_FOUND',
+  CUSTOMER_NOT_FOUND: 'CUSTOMER_NOT_FOUND',
+  INVALID_PAYMENT_STATE: 'INVALID_PAYMENT_STATE',
+  RETRY_LIMIT_EXCEEDED: 'RETRY_LIMIT_EXCEEDED',
+  OFFER_NOT_FOUND: 'OFFER_NOT_FOUND',
+  OFFER_INACTIVE: 'OFFER_INACTIVE',
+  INCENTIVE_NOT_ALLOWED: 'INCENTIVE_NOT_ALLOWED',
+  APPROVAL_REQUEST_FAILED: 'APPROVAL_REQUEST_FAILED',
+};
