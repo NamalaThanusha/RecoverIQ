@@ -15,11 +15,11 @@ export class AgentOrchestrator {
   private paymentService: PaymentService;
   private maxIterations = config.agent.maxIterations;
 
-  constructor(prisma: PrismaClient) {
+  constructor(prisma: PrismaClient, gatewayScenarios?: Record<string, any>) {
     this.prisma = prisma;
     this.gemini = new GeminiClient();
     this.policyEngine = new PolicyEngine();
-    this.paymentService = new PaymentService(prisma, new MockPaymentGateway({ scenarios: {} }));
+    this.paymentService = new PaymentService(prisma, new MockPaymentGateway({ scenarios: gatewayScenarios || {} }));
   }
 
   private async logAudit(paymentId: string, agentRunId: string, eventType: string, message: string) {

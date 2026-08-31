@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AgentOrchestrator } from '../agent';
+import { getAgentRunTimeline, getEscalations } from '../controllers/agent.controller';
 
 export function getAgentRoutes(prisma: PrismaClient) {
   const router = Router();
@@ -10,7 +11,7 @@ export function getAgentRoutes(prisma: PrismaClient) {
     try {
       const { paymentId } = req.body;
       if (!paymentId) {
-        return res.status(400).json({ error: 'paymentId is required' });
+        return res.status(400).json({ error: { code: 'INVALID_REQUEST', message: 'paymentId is required' } });
       }
 
       const result = await orchestrator.run(paymentId);
@@ -18,10 +19,13 @@ export function getAgentRoutes(prisma: PrismaClient) {
     } catch (error: any) {
       console.error('Agent run failed:', error);
       return res.status(500).json({
-        error: error.message || 'An error occurred during the agent run.'
+        error: { code: 'INTERNAL_ERROR', message: error.message || 'An error occurred during the agent run.' }
       });
     }
   });
+
+  router.get('/runs/:id', getAgentRunTimeline);
+  router.get('/escalations', getEscalations);
 
   return router;
 }
