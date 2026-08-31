@@ -16,7 +16,9 @@ describe('Database Layer Tests', () => {
   });
 
   test('Should be able to query a Customer', async () => {
-    const customer = await prisma.customer.findFirst();
+    const customer = await prisma.customer.findFirst({
+      where: { email: { contains: '@synthetic.recoveriq.local' } }
+    });
     expect(customer).toBeDefined();
     if (customer) {
       expect(customer.id).toBeDefined();
