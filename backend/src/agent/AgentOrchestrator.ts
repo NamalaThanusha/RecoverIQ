@@ -52,20 +52,42 @@ export class AgentOrchestrator {
     await this.logAudit(paymentId, agentRun.id, 'AGENT_RUN_STARTED', 'Agent run started');
 
     let iterations = 0;
-    let interaction: any = await this.gemini.startInteraction(paymentId);
+    let interaction: any = null;
     let finalOutcome = null;
 
     try {
+      interaction = await this.gemini.startInteraction(paymentId);
+
       while (iterations < this.maxIterations) {
         iterations++;
         
-        const outputs = interaction.outputs || [];
-        const functionCalls = outputs.filter((o: any) => o.type === 'function_call');
+        if (interaction?.status === 'failed') {
+          throw new Error("Interaction failed according to API status.");
+        }
+
+        const steps = interaction?.steps || [];
         
-        if (functionCalls.length === 0) {
-          const textOutputs = outputs.filter((o: any) => o.type === 'text');
-          if (textOutputs.length > 0) {
-            finalOutcome = textOutputs.map((o: any) => o.text).join('\\n');
+        const functionCallSteps = steps.filter((s: any) => s.type === 'function_call');
+        const functionResultSteps = steps.filter((s: any) => s.type === 'function_result');
+        const answeredCallIds = new Set(functionResultSteps.map((s: any) => s.call_id));
+        const functionCalls = functionCallSteps.filter((s: any) => !answeredCallIds.has(s.call_id));
+        
+        if (functionCalls.length === 0 || interaction?.status === 'completed') {
+          const modelOutputs = steps.filter((s: any) => s.type === 'model_output');
+          const textParts: string[] = [];
+          for (const mo of modelOutputs) {
+            if (mo.content) {
+              for (const c of mo.content) {
+                if (c.parts) {
+                  for (const p of c.parts) {
+                    if (p.text) textParts.push(p.text);
+                  }
+                }
+              }
+            }
+          }
+          if (textParts.length > 0) {
+            finalOutcome = textParts.join('\\n');
           } else {
             finalOutcome = 'Agent completed with no text response.';
           }
@@ -179,7 +201,7 @@ export class AgentOrchestrator {
           functionResults.push({
             type: 'function_result',
             name: fnName,
-            call_id: call.id,
+            call_id: call.call_id || call.id,
             result: resultData
           });
         }

@@ -52,7 +52,7 @@ describe('API Endpoints', () => {
     it('GET /api/payments/:id should return payment details', async () => {
       const res = await request(app).get(`/api/payments/${paymentId}`);
       expect(res.status).toBe(200);
-      expect(res.body.paymentId).toBe(paymentId);
+      expect(res.body.id).toBe(paymentId);
     });
 
     it('GET /api/payments/:id/context should return context', async () => {

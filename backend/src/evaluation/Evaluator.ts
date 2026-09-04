@@ -78,7 +78,13 @@ export class Evaluator {
     }
 
     // 4. Run agent on each fixture sequentially (to respect rate limits)
+    let isFirstFixture = true;
     for (const fx of fixtures) {
+      if (!isFirstFixture) {
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+      isFirstFixture = false;
+
       const pAmountMinor = toMinorUnits(fx.payment.amount);
       totalRevenueAtRiskMinor += pAmountMinor;
       scenarioResults[fx.scenarioName].count++;

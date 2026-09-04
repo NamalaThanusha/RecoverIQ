@@ -1,20 +1,26 @@
-import './index.css'
+
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AppLayout } from './layouts/AppLayout';
+import { Dashboard } from './pages/Dashboard';
+import { PaymentsList } from './pages/PaymentsList';
+import { PaymentDetail } from './pages/PaymentDetail';
+import { Escalations } from './pages/Escalations';
+import { Evaluation } from './pages/Evaluation';
 
 function App() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-900 text-white">
-      <div className="max-w-2xl text-center p-8 border border-gray-700 rounded-xl shadow-2xl bg-gray-800">
-        <h1 className="text-4xl font-bold mb-4 text-blue-400">RecoverIQ</h1>
-        <p className="text-xl text-gray-300">
-          AI-Powered Revenue Recovery Platform
-        </p>
-        <div className="mt-8 flex justify-center space-x-4">
-          <span className="px-3 py-1 bg-green-900 text-green-300 rounded-full text-sm">Status: Operational</span>
-          <span className="px-3 py-1 bg-blue-900 text-blue-300 rounded-full text-sm">Phase: 0</span>
-        </div>
-      </div>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/payments" element={<PaymentsList />} />
+          <Route path="/payments/:id" element={<PaymentDetail />} />
+          <Route path="/escalations" element={<Escalations />} />
+          <Route path="/evaluation" element={<Evaluation />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
